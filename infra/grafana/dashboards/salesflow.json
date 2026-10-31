@@ -1,0 +1,56 @@
+{
+  "title": "SalesFlow pipeline",
+  "uid": "salesflow-pipeline",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "timeseries", "title": "Ingest rate (events/s by outcome)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (result) (rate(sales_ingest_events_total[1m]))", "legendFormat": "{{result}}" }]
+    },
+    {
+      "id": 2, "type": "timeseries", "title": "Consumer lag (messages behind head)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(sales_consumer_lag)", "legendFormat": "total" },
+                  { "expr": "sales_consumer_lag", "legendFormat": "partition {{partition}}" }]
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "Consumed messages/s by result",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (result) (rate(sales_events_consumed_total[1m]))", "legendFormat": "{{result}}" }]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Batch duration p50 / p95 (s)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.5, sum by (le) (rate(sales_batch_duration_seconds_bucket[1m])))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(sales_batch_duration_seconds_bucket[1m])))", "legendFormat": "p95" }
+      ]
+    },
+    {
+      "id": 5, "type": "stat", "title": "Open WebSocket connections",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(sales_ws_connections)" }]
+    },
+    {
+      "id": 6, "type": "stat", "title": "Dead-lettered messages (total)",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(sales_dlq_total)" }]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "API request rate by status (from request logs: n/a) - ingest accepted vs rejected",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(sales_ingest_events_total{result=\"rejected\"}[5m]))", "legendFormat": "rejected/s" }]
+    }
+  ]
+}

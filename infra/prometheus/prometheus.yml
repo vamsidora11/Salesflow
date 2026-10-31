@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+
+  - job_name: consumer
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["consumer:9100"]
+# The Celery worker and beat do not expose metrics; reconciliation and DLQ results are logged
+# as structured JSON (reconciliation_mismatch, dlq_summary).

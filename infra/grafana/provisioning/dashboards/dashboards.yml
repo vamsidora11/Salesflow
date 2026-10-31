@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: salesflow
+    folder: SalesFlow
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

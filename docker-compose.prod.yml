@@ -1,0 +1,51 @@
+# Production overlay. Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Requires Docker Compose >= 2.24 (uses the !reset / !override tags).
+#
+# - Only nginx is published (port 80). Terminate TLS in front of it (Caddy, a cloud load
+#   balancer, or Cloudflare) and set HOST_HTTP_PORT / PUBLIC_S3_URL accordingly.
+# - APP_ENV=production makes the API refuse to start with the default JWT secret.
+# - Secrets come from .env (or your secret manager injecting the same variable names).
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  timescaledb:
+    <<: *restart
+    ports: !reset []
+  kafka:
+    <<: *restart
+    ports: !reset []
+  redis:
+    <<: *restart
+    ports: !reset []
+  minio:
+    <<: *restart
+    # Presigned download URLs point at PUBLIC_S3_URL: publish MinIO (or use S3) behind TLS.
+    ports: !override
+      - "9000:9000"
+  api:
+    <<: *restart
+    environment:
+      APP_ENV: production
+  consumer:
+    <<: *restart
+    environment:
+      APP_ENV: production
+    deploy:
+      replicas: 2 # same consumer group; useful parallelism is capped at 6 partitions
+  worker:
+    <<: *restart
+    environment:
+      APP_ENV: production
+  beat:
+    <<: *restart
+    environment:
+      APP_ENV: production
+  frontend:
+    <<: *restart
+  nginx:
+    <<: *restart
+    ports: !override
+      - "${HOST_HTTP_PORT:-80}:80"
